@@ -25,22 +25,41 @@ public class GameManager : NetworkBehaviour
     }
 
     private PlayerType localPlayerType;
+    private PlayerType currentPlayablePlayerType;
 
     public override void OnNetworkSpawn() 
     {
         if (IsServer) 
         {
             localPlayerType = PlayerType.Cross;
+            currentPlayablePlayerType = PlayerType.Cross;
         }
         else 
         {
             localPlayerType = PlayerType.Circle;
+            currentPlayablePlayerType = PlayerType.Circle;
         }
     }
 
-    public void ClickedOnGridPosition(int x, int y) 
+    [Rpc(SendTo.Server)]
+    public void ClickedOnGridPositionRpc(int x, int y, PlayerType playerType) 
     {
-        OnClickedOnGridPosition?.Invoke(x, y, localPlayerType);
+        if (playerType != currentPlayablePlayerType) 
+        {
+            return;
+        }
+
+        OnClickedOnGridPosition?.Invoke(x, y, playerType);
+
+        switch (currentPlayablePlayerType) 
+        {
+            case PlayerType.Cross:
+                currentPlayablePlayerType = PlayerType.Circle;
+                break;
+            case PlayerType.Circle:
+                currentPlayablePlayerType = PlayerType.Cross;
+                break;
+        }
     }
 
     public PlayerType GetLocalPlayerType() 
